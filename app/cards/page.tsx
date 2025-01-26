@@ -11,7 +11,7 @@ type Card = {
 };
 
 export default function CardApp() {
-  const defaultLotSize = 10;
+  const defaultLotSize = 17;
 
   const [currentCard, setCurrentCard] = useState<Card | null>(null);
   const [seenCards, setSeenCards] = useState(new Set<number>());
