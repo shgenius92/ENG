@@ -16,7 +16,7 @@ export default function CardApp() {
   const [currentCard, setCurrentCard] = useState<Card | null>(null);
   const [seenCards, setSeenCards] = useState(new Set<number>());
   const [repetitionCards, setRepetitionCards] = useState(new Set<number>());
-  const [progress, setProgress] = useState({ totalSeenCards: "?", totalCards: "?" });
+  const [progress, setProgress] = useState({ totalSeenCards: 0, totalCards: 0 });
 
   useEffect(() => {
     // Fetch data from localStorage
@@ -91,8 +91,8 @@ export default function CardApp() {
     setRepetitionCards(new Set());
     setCurrentCard(null);
     setProgress({
-      totalSeenCards: "?",
-      totalCards: "?",
+      totalSeenCards: 0,
+      totalCards: 0,
     });
     localStorage.setItem('seenCards', JSON.stringify([]));
     localStorage.setItem('repetitionCards', JSON.stringify([]));
