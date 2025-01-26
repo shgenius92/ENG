@@ -1,8 +1,15 @@
 'use client';
 import { useState, useEffect } from 'react';
 
+// Define the type for the card
+type Card = {
+  id: number;
+  question: string;
+  answer: string;
+};
+
 export default function CardApp() {
-  const [currentCard, setCurrentCard] = useState(null);
+  const [currentCard, setCurrentCard] = useState<Card | null>(null);
   const [seenCards, setSeenCards] = useState(new Set());
   const [repetitionCards, setRepetitionCards] = useState(new Set());
   const [progress, setProgress] = useState({totalSeenCards: "?", totalCards: "?"});
@@ -37,7 +44,7 @@ export default function CardApp() {
   };
 
   const markForRepetition = () => {
-    if (currentCard) {
+    if (currentCard?.id) {
       const updatedRepetitionCards = new Set(repetitionCards);
       updatedRepetitionCards.add(currentCard.id);
       setRepetitionCards(updatedRepetitionCards);
