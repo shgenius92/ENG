@@ -99,7 +99,7 @@ export default function CardApp() {
   };
 
   return (
-    <div className="bg-gradient-to-r from-blue-400 to-blue-600 min-h-screen text-white flex flex-col items-center justify-center py-8 relative">
+    <div className="bg-gradient-to-r from-blue-400 to-blue-600 min-h-screen text-white flex flex-col items-center justify-center py-8 relative user-select-none">
       {/* Seen Cards Counter */}
       <div className="absolute top-4 left-4 p-4 bg-opacity-70 bg-gray-800 rounded-xl sm:top-6 sm:left-6">
         <p className="text-sm sm:text-lg font-semibold">
