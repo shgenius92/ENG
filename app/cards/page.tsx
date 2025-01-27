@@ -8,6 +8,11 @@ type Card = {
   id: number;
   example_en: string;
   example_vi: string;
+  word: string;
+  type: string;
+  ipa: string;
+  ipa_example: string;
+  vi: string;
 };
 
 export default function CardApp() {
@@ -99,7 +104,7 @@ export default function CardApp() {
   };
 
   return (
-    <div className="bg-gradient-to-r from-blue-400 to-blue-600 min-h-screen text-white flex flex-col items-center justify-center py-8 relative user-select-none">
+    <div className="bg-gradient-to-r from-blue-400 to-blue-600 min-h-screen text-white flex flex-col items-center justify-center py-8 relative">
       {/* Seen Cards Counter */}
       <div className="absolute top-4 left-4 p-4 bg-opacity-70 bg-gray-800 rounded-xl sm:top-6 sm:left-6">
         <p className="text-sm sm:text-lg font-semibold">
@@ -108,18 +113,40 @@ export default function CardApp() {
       </div>
 
       {/* App Title */}
-      <div className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-center">
+      <div className="text-2xl sm:text-3xl font-bold mb-8 text-center">
         Flashcards App
       </div>
 
       {/* Card Container */}
-      <div className="w-80 h-80 sm:w-96 sm:h-96 bg-white rounded-xl shadow-lg overflow-hidden transform transition-all">
+      <div className="w-80 h-96 sm:w-96 sm:h-[28rem] bg-white rounded-xl shadow-lg overflow-hidden transform transition-all relative">
         {currentCard ? (
-          <div className="w-full h-full flex flex-col justify-center items-center p-4 bg-gray-100 rounded-xl">
-            <h2 className="text-xl sm:text-2xl font-semibold text-blue-500 mb-4 text-center">
-              {currentCard.example_vi}
-            </h2>
-            <p className="text-base sm:text-xl text-gray-800 text-center">{currentCard.example_en}</p>
+          <div className="w-full h-full flex flex-col justify-center items-center p-4 bg-gray-100 rounded-xl relative">
+            {/* Additional Information (Top Left) */}
+            <div className="absolute top-5 inset-x-0 flex justify-center">
+              <div className="">
+                {/* Word, IPA, and Translation */}
+                <div className="flex flex-wrap items-center justify-center space-x-3">
+                  <span className="text-xs sm:text-sm text-purple-600">
+                    {currentCard.word} {currentCard.type}
+                  </span>
+                  <span className="text-xs sm:text-sm text-green-600">
+                    {currentCard.ipa}
+                  </span>
+                  <span className="text-xs sm:text-sm text-red-600">
+                    {'>'} {currentCard.vi}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Main Card Content */}
+            <div className="flex-grow flex flex-col justify-center items-center mt-4">
+              <h2 className="text-lg sm:text-xl font-semibold text-blue-500 mb-4 text-center">
+                {currentCard.example_vi}
+              </h2>
+              <p className="text-base sm:text-lg text-gray-800 text-center">{currentCard.example_en}</p>
+              <h3 className="text-xs sm:text-sm text-green-600">{currentCard.ipa_example}</h3>
+            </div>
           </div>
         ) : (
           <div className="w-full h-full flex justify-center items-center text-gray-500 text-center">
@@ -129,17 +156,17 @@ export default function CardApp() {
       </div>
 
       {/* Buttons */}
-      <div className="mt-6 sm:mt-8 space-y-4 sm:space-y-0 sm:space-x-4 flex flex-col sm:flex-row justify-center items-center">
+      <div className="mt-8 sm:mt-10 space-y-4 sm:space-y-0 sm:space-x-4 flex flex-col sm:flex-row justify-center items-center">
         <button
           onClick={fetchCard}
-          className="px-4 sm:px-6 py-2 sm:py-3 bg-blue-500 hover:bg-blue-700 rounded-lg text-base sm:text-lg"
+          className="px-4 sm:px-6 py-2 sm:py-3 bg-blue-500 hover:bg-blue-700 rounded-lg text-base sm:text-lg shadow-md"
         >
           Get New Card
         </button>
         <button
           onClick={markForRepetition}
           disabled={!currentCard}
-          className="px-4 sm:px-6 py-2 sm:py-3 bg-yellow-500 hover:bg-yellow-700 rounded-lg text-base sm:text-lg disabled:opacity-50"
+          className="px-4 sm:px-6 py-2 sm:py-3 bg-yellow-500 hover:bg-yellow-700 rounded-lg text-base sm:text-lg shadow-md disabled:opacity-50"
         >
           Mark for Repetition
         </button>
@@ -149,7 +176,7 @@ export default function CardApp() {
       <div className="mt-6 sm:mt-8">
         <button
           onClick={resetCards}
-          className="px-4 sm:px-6 py-2 sm:py-3 bg-red-500 hover:bg-red-700 rounded-lg text-base sm:text-lg"
+          className="px-4 sm:px-6 py-2 sm:py-3 bg-red-500 hover:bg-red-700 rounded-lg text-base sm:text-lg shadow-md"
         >
           Restart
         </button>
