@@ -2,12 +2,12 @@ import React from "react";
 import { Lock } from "lucide-react";
 
 const CardPage = () => {
-  // Create an array with 30 buckets
+  // Create an array with 6 buckets
   const buckets = Array.from({ length: 30 }, (_, index) => index + 1);
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8">
-      <div className="container mx-auto flex flex-wrap justify-start">
+    <div className="min-h-screen bg-gray-100 py-8 flex items-center">
+      <div className="mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {buckets.map((bucket) => (
           <div
             key={bucket}
