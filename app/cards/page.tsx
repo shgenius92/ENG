@@ -113,12 +113,12 @@ export default function CardApp() {
       </div>
 
       {/* App Title */}
-      <div className="text-2xl sm:text-3xl font-bold mb-8 text-center">
+      <div className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-center">
         Flashcards App
       </div>
 
       {/* Card Container */}
-      <div className="w-80 h-96 sm:w-96 sm:h-[28rem] bg-white rounded-xl shadow-lg overflow-hidden transform transition-all relative">
+      <div className="w-80 h-80 sm:w-96 sm:h-96 bg-white rounded-xl shadow-lg overflow-hidden transform transition-all relative">
         {currentCard ? (
           <div className="w-full h-full flex flex-col justify-center items-center p-4 bg-gray-100 rounded-xl relative">
             {/* Additional Information (Top Left) */}
