@@ -4,7 +4,7 @@ import React from "react";
 const Card: React.FC<{ index: number }> = ({ index }) => {
   return (
     <div className="w-24 h-36 border border-black rounded-lg shadow-lg bg-white relative flex flex-col items-center justify-center">
-      <div className="absolute top-2 right-2 text-xs font-bold text-gray-800">
+      <div className="absolute top-2 text-xs font-bold text-gray-800">
         Bucket {index}
       </div>
       <div className="flex justify-center items-center h-full text-4xl">
