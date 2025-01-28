@@ -11,7 +11,7 @@ const CardPage = () => {
         {buckets.map((bucket) => (
           <div
             key={bucket}
-            className="bg-white rounded-lg shadow-md flex flex-col items-center justify-center m-2 w-full sm:w-28 h-40"
+            className="bg-white rounded-lg shadow-md flex flex-col items-center justify-center m-2 w-full sm:w-25 h-40"
           >
             <div className="w-full p-2 flex justify-center bg-gray-100 rounded-t-lg">
               <h2 className="text-xs font-semibold text-center text-gray-700">
