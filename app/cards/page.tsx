@@ -111,7 +111,7 @@ export default function CardApp() {
       {/* Seen Cards Counter */}
       <div className="absolute top-4 left-4 p-4 bg-opacity-70 bg-gray-800 rounded-xl sm:top-6 sm:left-6">
         <p className="text-sm sm:text-lg font-semibold">
-          {progress.totalSeenCards} / {progress.totalCards}
+          Bucket {currentBucketVar} > {progress.totalSeenCards} / {progress.totalCards}
         </p>
       </div>
 
