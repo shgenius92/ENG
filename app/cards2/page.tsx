@@ -1,32 +1,37 @@
+// pages/index.tsx
 import React from "react";
-import { Lock } from "lucide-react";
 
-const CardPage = () => {
-  // Create an array with 30 buckets
-  const buckets = Array.from({ length: 30 }, (_, index) => index + 1);
-
+const Card: React.FC<{ index: number }> = ({ index }) => {
   return (
-    <div className="min-h-screen bg-gray-100 py-8 flex items-center">
-      <div className="mx-auto grid grid-cols-4 gap-2">
-        {buckets.map((bucket) => (
-          <div
-            key={bucket}
-            className="bg-white rounded-lg shadow-md flex flex-col items-center justify-center m-2 w-full sm:w-16 h-40"
-          >
-            <div className="w-full p-2 flex justify-center bg-gray-100 rounded-t-lg">
-              <h2 className="text-xs font-semibold text-center text-gray-700">
-                Bucket {bucket}
-              </h2>
-            </div>
-
-            <div className="flex items-center justify-center flex-grow">
-              <Lock className="text-gray-500 h-8 w-8" />
-            </div>
-          </div>
-        ))}
+    <div className="w-24 h-36 border border-black rounded-lg shadow-lg bg-white relative flex flex-col items-center justify-center">
+      <div className="absolute top-2 right-2 text-xs font-bold text-gray-800">
+        Bucket {index}
+      </div>
+      <div className="flex justify-center items-center h-full text-4xl">
+        <span className="text-5xl">🔒</span>
       </div>
     </div>
   );
 };
 
-export default CardPage;
+const Page: React.FC = () => {
+  const rows = 6; // Total number of rows of cards (6 rows of 5 cards)
+  const cardsPerRow = 5;
+
+  const cardElements = [];
+  for (let i = 1; i <= rows * cardsPerRow; i++) {
+    cardElements.push(<Card key={i} index={i} />);
+  }
+
+  return (
+    <div className="grid grid-cols-5 gap-4 p-6">
+      {cardElements.map((card, index) => (
+        <div key={index} className="flex justify-center">
+          {card}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+export default Page;
