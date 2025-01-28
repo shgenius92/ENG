@@ -16,19 +16,22 @@ type Card = {
 };
 
 export default function CardApp() {
-  const defaultLotSize = 17;
+  const defaultLotSize = 100; // TODO: to be deleted
 
   const [currentCard, setCurrentCard] = useState<Card | null>(null);
   const [seenCards, setSeenCards] = useState(new Set<number>());
   const [repetitionCards, setRepetitionCards] = useState(new Set<number>());
   const [progress, setProgress] = useState({ totalSeenCards: 0, totalCards: 0 });
+  const [currentBucketVar, setCurrentBucketVar] = useState(0);
 
   useEffect(() => {
     // Fetch data from localStorage
     const storedSeenCards = new Set<number>(JSON.parse(localStorage.getItem('seenCards') || '[]'));
     const storedRepetitionCards = new Set<number>(JSON.parse(localStorage.getItem('repetitionCards') || '[]'));
+    const storedCurrentBucket = parseInt(localStorage.getItem('currentBucket') || '0', 10);
     setSeenCards(storedSeenCards);
     setRepetitionCards(storedRepetitionCards);
+    setCurrentBucketVar(storedCurrentBucket);
 
     // If there are seen cards, get the last one
     if (storedSeenCards.size > 0) {
@@ -60,7 +63,7 @@ export default function CardApp() {
     const response = await fetch('/api/getCard', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ seenCardIds: [...seenCards] }),
+      body: JSON.stringify({ seenCardIds: [...seenCards], currentBucket: currentBucketVar}),
     });
     const data = await response.json();
 
@@ -108,7 +111,7 @@ export default function CardApp() {
       {/* Seen Cards Counter */}
       <div className="absolute top-4 left-4 p-4 bg-opacity-70 bg-gray-800 rounded-xl sm:top-6 sm:left-6">
         <p className="text-sm sm:text-lg font-semibold">
-          Seen: {progress.totalSeenCards} / {progress.totalCards}
+          {progress.totalSeenCards} / {progress.totalCards}
         </p>
       </div>
 

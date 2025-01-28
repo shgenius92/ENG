@@ -1,25 +1,36 @@
-// pages/index.tsx
+'use client';
 import React from "react";
+import Link from "next/link";
 
 const Card: React.FC<{ index: number }> = ({ index }) => {
+  const handleCardClick = () => {
+    // Set currentBucket in localStorage and navigate to /card
+    localStorage.setItem('currentBucket', index.toString());
+    localStorage.setItem('seenCards', JSON.stringify([]));
+  };
+
   return (
-    <div className="w-24 h-32 border border-black rounded-lg shadow-lg bg-white relative flex flex-col items-center justify-center">
-      <div className="absolute top-2 text-xs font-bold text-gray-800">
-        Bucket {index}
+    <Link href="/cards">
+      <div
+        onClick={handleCardClick}
+        className="w-24 h-32 border border-black rounded-lg shadow-lg bg-white relative flex flex-col items-center justify-center cursor-pointer"
+      >
+        <div className="absolute top-2 text-xs font-bold text-gray-800">
+          Bucket {index}
+        </div>
+        <div className="flex justify-center items-center h-full text-4xl">
+          <span className="text-3xl">🔒</span>
+        </div>
       </div>
-      <div className="flex justify-center items-center h-full text-4xl">
-        <span className="text-3xl">🔒</span>
-      </div>
-    </div>
+    </Link>
   );
 };
 
 const Page: React.FC = () => {
-  const rows = 6; // Total number of rows of cards (6 rows of 5 cards)
-  const cardsPerRow = 5;
+  const totalCards = 34; // Total number of cards
 
   const cardElements = [];
-  for (let i = 1; i <= rows * cardsPerRow; i++) {
+  for (let i = 1; i <= totalCards; i++) {
     cardElements.push(<Card key={i} index={i} />);
   }
 
