@@ -7,11 +7,11 @@ const CardPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 py-8 flex items-center">
-      <div className="mx-auto grid grid-cols-4">
+      <div className="mx-auto grid grid-cols-4 gap-2">
         {buckets.map((bucket) => (
           <div
             key={bucket}
-            className="bg-white rounded-lg shadow-md flex flex-col items-center justify-center m-2 w-full sm:w-20 h-40"
+            className="bg-white rounded-lg shadow-md flex flex-col items-center justify-center m-2 w-full sm:w-16 h-40"
           >
             <div className="w-full p-2 flex justify-center bg-gray-100 rounded-t-lg">
               <h2 className="text-xs font-semibold text-center text-gray-700">
