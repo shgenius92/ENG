@@ -132,13 +132,13 @@ export default function CardApp() {
               <div className="">
                 {/* Word, IPA, and Translation */}
                 <div className="flex flex-wrap items-center justify-center space-x-3">
-                  <span className="text-xs sm:text-sm text-purple-600">
+                  <span className="text-base sm:text-lg text-purple-600">
                     {currentCard.word} {currentCard.type}
                   </span>
-                  <span className="text-xs sm:text-sm text-green-600">
+                  <span className="text-base sm:text-lg text-green-600">
                     {currentCard.ipa}
                   </span>
-                  <span className="text-xs sm:text-sm text-red-600">
+                  <span className="text-base sm:text-lg text-red-600">
                     {'>'} {currentCard.vi}
                   </span>
                 </div>
@@ -146,12 +146,12 @@ export default function CardApp() {
             </div>
 
             {/* Main Card Content */}
-            <div className="flex-grow flex flex-col justify-center items-center mt-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-blue-500 mb-4 text-center">
+            <div className="flex-grow flex flex-col justify-center mt-4">
+              <h2 className="text-xl font-semibold text-blue-500 mb-4 text-justify">
                 {currentCard.example_vi}
               </h2>
-              <p className="text-base sm:text-lg text-gray-800 text-center">{currentCard.example_en}</p>
-              <h3 className="text-xs sm:text-sm text-green-600">{currentCard.ipa_example}</h3>
+              <p className="text-lg text-gray-800 text-justify">{currentCard.example_en}</p>
+              <h3 className="text-base text-green-600">{currentCard.ipa_example}</h3>
             </div>
           </div>
         ) : (
