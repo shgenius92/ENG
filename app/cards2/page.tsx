@@ -35,7 +35,7 @@ const Page: React.FC = () => {
   }
 
   return (
-    <div className="grid grid-cols-5 gap-2 p-6">
+    <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 gap-2 p-6">
       {cardElements.map((card, index) => (
         <div key={index} className="flex justify-center">
           {card}
