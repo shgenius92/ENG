@@ -15,31 +15,52 @@ type Card = {
   vi: string;
 };
 
-export default function CardApp() {
-  const defaultLotSize = 100; // TODO: to be deleted
+let currentPosition = 0;
 
+function computeNextPosition(cardsSet: Set<number>, position: number): number {
+  const cards = Array.from(cardsSet);
+  let result = 0;
+  if (position >= 0 && position < cards.length - 1) {
+    result = position + 1;
+  } else {
+    result = 0;
+  }
+
+  localStorage.setItem('revisionCurrentCard', JSON.stringify(cards[result]));
+  return result;
+}
+
+function getRevisionCurrentCardPosition(cardsSet: Set<number>, revisionCurrentCard: number): number {
+  const cardsArray = Array.from(cardsSet);
+  const position = cardsArray.indexOf(revisionCurrentCard);
+
+  return position;
+}
+
+export default function CardApp() {
   const [currentCard, setCurrentCard] = useState<Card | null>(null);
-  const [seenCards, setSeenCards] = useState(new Set<number>());
   const [repetitionCards, setRepetitionCards] = useState(new Set<number>());
   const [progress, setProgress] = useState({ totalSeenCards: 0, totalCards: 0 });
-  const [currentBucketVar, setCurrentBucketVar] = useState(0);
+  let revisionCurrentCard = 0;
 
   useEffect(() => {
     // Fetch data from localStorage
-    const storedSeenCards = new Set<number>(JSON.parse(localStorage.getItem('seenCards') || '[]'));
     const storedRepetitionCards = new Set<number>(JSON.parse(localStorage.getItem('repetitionCards') || '[]'));
-    const storedCurrentBucket = parseInt(localStorage.getItem('currentBucket') || '0', 10);
-    setSeenCards(storedSeenCards);
     setRepetitionCards(storedRepetitionCards);
-    setCurrentBucketVar(storedCurrentBucket);
+    revisionCurrentCard = parseInt(localStorage.getItem('revisionCurrentCard') || '0', 10);
+    // if revisionCurrentCard = NAN, should update it with the card position = 0
+    currentPosition = getRevisionCurrentCardPosition(storedRepetitionCards, revisionCurrentCard);
 
+    console.log('revisionCurrentCard: ', revisionCurrentCard);
+    console.log('storedRepetitionCards.size: ', storedRepetitionCards.size);
+    console.log('currentPosition: ', currentPosition);
+    console.log('storedRepetitionCards: ', storedRepetitionCards);
     // If there are seen cards, get the last one
-    if (storedSeenCards.size > 0) {
-      const lastSeenCardId = Array.from(storedSeenCards)[storedSeenCards.size - 1];
-      console.log(`Last seen card ID: ${lastSeenCardId}`);
-
-      const fetchLastCard = async () => {
-        const response = await fetch(`/api/getCard?id=${lastSeenCardId}`, {
+    if (storedRepetitionCards.size > 0) {
+      console.log('card to retrieve: ', Array.from(storedRepetitionCards)[currentPosition]);
+      const fetchNextCard = async () => {
+        console.log('card to retrieve: ', Array.from(storedRepetitionCards)[currentPosition]);
+        const response = await fetch(`/api/getCard?id=${Array.from(storedRepetitionCards)[currentPosition]}`, {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
         });
@@ -50,67 +71,75 @@ export default function CardApp() {
           setCurrentCard(data.card);
         }
       };
-      fetchLastCard();
-    }
+      fetchNextCard();
 
-    setProgress({
-          totalSeenCards: storedSeenCards.size,
-          totalCards: defaultLotSize,
-        });
+      setProgress({
+        totalSeenCards: currentPosition + 1,
+        totalCards: storedRepetitionCards.size,
+      });
+    }
   }, []);
 
-  const fetchCard = async () => {
-    const response = await fetch('/api/getCard', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ seenCardIds: [...seenCards], currentBucket: currentBucketVar}),
+  const nextCard = async () => {
+    currentPosition = computeNextPosition(repetitionCards, currentPosition);
+    const response = await fetch(`/api/getCard?id=${Array.from(repetitionCards)[currentPosition]}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
     });
     const data = await response.json();
 
-    console.log('API response:', data);
-
-    if (data.message === 'All cards read!') {
-      alert('You have read all the cards!');
-      return;
-    }
-
     setCurrentCard(data.card);
-    setProgress(data.progress);
-    console.log('Card set:', data.card);
-
-    const updatedSeenCards = new Set(seenCards);
-    updatedSeenCards.add(data.card.id);
-    setSeenCards(updatedSeenCards);
-    localStorage.setItem('seenCards', JSON.stringify([...updatedSeenCards]));
+    setProgress({ totalSeenCards: (currentPosition + 1), totalCards: (repetitionCards.size) });
   };
 
-  const markForRepetition = () => {
+  const unMarkForRepetition = async () => {  // Make the function async
     if (currentCard?.id) {
       const updatedRepetitionCards = new Set(repetitionCards);
-      updatedRepetitionCards.add(currentCard.id);
+      console.log("updatedRepetitionCards: ", updatedRepetitionCards);
+
+      updatedRepetitionCards.delete(currentCard.id);
+      console.log("updatedRepetitionCards after: ", updatedRepetitionCards);
+
       setRepetitionCards(updatedRepetitionCards);
       localStorage.setItem('repetitionCards', JSON.stringify([...updatedRepetitionCards]));
-    }
-  };
 
-  const resetCards = () => {
-    setSeenCards(new Set());
-    setCurrentCard(null);
-    setProgress({
-      totalSeenCards: 0,
-      totalCards: 0,
-    });
-    localStorage.setItem('seenCards', JSON.stringify([]));
-    localStorage.setItem('repetitionCards', JSON.stringify([]));
+      if (updatedRepetitionCards.size === 1) {
+        currentPosition = 0;
+        revisionCurrentCard = Array.from(updatedRepetitionCards)[currentPosition];
+      } else if (updatedRepetitionCards.size === 0) {
+        revisionCurrentCard = -1;
+      } else {
+        currentPosition = updatedRepetitionCards.size > currentPosition ? currentPosition : currentPosition - 1;
+        revisionCurrentCard = Array.from(updatedRepetitionCards)[currentPosition]
+      }
+      localStorage.setItem('revisionCurrentCard', JSON.stringify(revisionCurrentCard));
+
+      // Recalculate the progress after removing the card
+      const newTotalCards = updatedRepetitionCards.size;
+      const newTotalSeenCards = currentPosition;
+
+      // Await the fetch request
+      const response = await fetch(`/api/getCard?id=${Array.from(updatedRepetitionCards)[currentPosition]}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      // Await the .json() to resolve the response
+      const data = await response.json();
+
+      setCurrentCard(data.card);  // Now set the card
+
+      setProgress({
+        totalSeenCards: newTotalSeenCards,
+        totalCards: newTotalCards,
+      });
+    }
   };
 
   return (
     <div className="bg-gradient-to-r from-blue-400 to-blue-600 min-h-screen text-white flex flex-col items-center justify-center py-8 relative">
       {/* Seen Cards Counter */}
       <div className="absolute top-4 left-4 p-4 bg-opacity-70 bg-gray-800 rounded-xl sm:top-6 sm:left-6">
-        <p className="text-sm sm:text-lg font-semibold">
-          Bucket {currentBucketVar}
-        </p>
         <p className="text-sm sm:text-lg font-semibold text-center">
           {progress.totalSeenCards} / {progress.totalCards}
         </p>
@@ -162,27 +191,17 @@ export default function CardApp() {
       {/* Buttons */}
       <div className="mt-8 sm:mt-10 space-y-4 sm:space-y-0 sm:space-x-4 flex flex-col sm:flex-row justify-center items-center">
         <button
-          onClick={fetchCard}
+          onClick={nextCard}
           className="px-4 sm:px-6 py-2 sm:py-3 bg-blue-500 hover:bg-blue-700 rounded-lg text-base sm:text-lg shadow-md"
         >
-          Get New Card
+          {'>'}
         </button>
         <button
-          onClick={markForRepetition}
+          onClick={unMarkForRepetition}
           disabled={!currentCard}
           className="px-4 sm:px-6 py-2 sm:py-3 bg-yellow-500 hover:bg-yellow-700 rounded-lg text-base sm:text-lg shadow-md disabled:opacity-50"
         >
-          Mark for Repetition
-        </button>
-      </div>
-
-      {/* Restart Button */}
-      <div className="mt-6 sm:mt-8">
-        <button
-          onClick={resetCards}
-          className="px-4 sm:px-6 py-2 sm:py-3 bg-red-500 hover:bg-red-700 rounded-lg text-base sm:text-lg shadow-md"
-        >
-          Restart
+          UnMark for revision
         </button>
       </div>
     </div>

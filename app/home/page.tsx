@@ -19,7 +19,7 @@ const Card: React.FC<{ index: number }> = ({ index }) => {
           Bucket {index}
         </div>
         <div className="flex justify-center items-center h-full text-4xl">
-          <span className="text-3xl">🔒</span>
+          <span className="text-3xl">🔓</span>
         </div>
       </div>
     </Link>
