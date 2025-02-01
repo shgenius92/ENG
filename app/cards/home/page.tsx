@@ -10,7 +10,7 @@ const Card: React.FC<{ index: number }> = ({ index }) => {
   };
 
   return (
-    <Link href="/cards">
+    <Link href="/cards/cards">
       <div
         onClick={handleCardClick}
         className="w-24 h-32 border border-black rounded-lg shadow-lg bg-white relative flex flex-col items-center justify-center cursor-pointer"
