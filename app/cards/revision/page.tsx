@@ -46,16 +46,17 @@ export default function CardApp() {
   useEffect(() => {
       if (isFirstTimeLoaded && revisionCurrentCard !== -1) {
         const cardId = Array.from(repetitionCards)[currentPosition];
-        console.log('useEffect() - fetchCard');
         fetchCard(cardId);
       }
   }, [isFirstTimeLoaded]);
 
-    useEffect(() => {
+  useEffect(() => {
         if (revisionCurrentCard == -1) {
           setCurrentCard(null);
+        } else if (revisionCurrentCard !== -1) {
+            fetchCard(revisionCurrentCard);
         }
-    }, [revisionCurrentCard]);
+  }, [revisionCurrentCard]);
 
     // Function to fetch the card by id
     const fetchCard = async (cardId: number) => {
@@ -120,7 +121,6 @@ export default function CardApp() {
         localStorage.setItem('repetitionCards', JSON.stringify(Array.from(updatedRepetitionCards)));
         localStorage.setItem('revisionCurrentCard', JSON.stringify(newRevisionCurrentCard));
 
-        setIsFirstTimeLoaded(true);
   };
 
   return (
