@@ -15,25 +15,11 @@ type Card = {
   vi: string;
 };
 
-let currentPosition = 0;
-
-function computeNextPosition(cardsSet: Set<number>, position: number): number {
-  const cards = Array.from(cardsSet);
-  let result = 0;
-  if (position >= 0 && position < cards.length - 1) {
-    result = position + 1;
-  } else {
-    result = 0;
-  }
-
-  localStorage.setItem('revisionCurrentCard', JSON.stringify(cards[result]));
-  return result;
-}
-
 function getRevisionCurrentCardPosition(cardsSet: Set<number>, revisionCurrentCard: number): number {
   const cardsArray = Array.from(cardsSet);
   const position = cardsArray.indexOf(revisionCurrentCard);
 
+  console.log('getRevisionCurrentCardPosition: ', position);
   return position;
 }
 
@@ -41,99 +27,100 @@ export default function CardApp() {
   const [currentCard, setCurrentCard] = useState<Card | null>(null);
   const [repetitionCards, setRepetitionCards] = useState(new Set<number>());
   const [progress, setProgress] = useState({ totalSeenCards: 0, totalCards: 0 });
-  let revisionCurrentCard = 0;
+  const [revisionCurrentCard, setRevisionCurrentCard] = useState(-1);
+  const [currentPosition, setCurrentPosition] = useState(-1);
+  const [isFirstTimeLoaded, setIsFirstTimeLoaded] = useState(false);
 
   useEffect(() => {
-    // Fetch data from localStorage
     const storedRepetitionCards = new Set<number>(JSON.parse(localStorage.getItem('repetitionCards') || '[]'));
     setRepetitionCards(storedRepetitionCards);
-    revisionCurrentCard = parseInt(localStorage.getItem('revisionCurrentCard') || '0', 10);
-    // if revisionCurrentCard = NAN, should update it with the card position = 0
-    currentPosition = getRevisionCurrentCardPosition(storedRepetitionCards, revisionCurrentCard);
+    const storedRevisionCurrentCard = parseInt(localStorage.getItem('revisionCurrentCard') || -1, 10);
+    const newRevisionCurrentCard = (storedRevisionCurrentCard < 0 && storedRepetitionCards.size > 0) ? Array.from(storedRepetitionCards)[0] : storedRevisionCurrentCard;
 
-    console.log('revisionCurrentCard: ', revisionCurrentCard);
-    console.log('storedRepetitionCards.size: ', storedRepetitionCards.size);
-    console.log('currentPosition: ', currentPosition);
-    console.log('storedRepetitionCards: ', storedRepetitionCards);
-    // If there are seen cards, get the last one
-    if (storedRepetitionCards.size > 0) {
-      console.log('card to retrieve: ', Array.from(storedRepetitionCards)[currentPosition]);
-      const fetchNextCard = async () => {
-        console.log('card to retrieve: ', Array.from(storedRepetitionCards)[currentPosition]);
-        const response = await fetch(`/api/getCard?id=${Array.from(storedRepetitionCards)[currentPosition]}`, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-        });
+    setRevisionCurrentCard(newRevisionCurrentCard);
+    setCurrentPosition(getRevisionCurrentCardPosition(storedRepetitionCards, newRevisionCurrentCard));
 
-        const data = await response.json();
-
-        if (data.card) {
-          setCurrentCard(data.card);
-        }
-      };
-      fetchNextCard();
-
-      setProgress({
-        totalSeenCards: currentPosition + 1,
-        totalCards: storedRepetitionCards.size,
-      });
-    }
+    setIsFirstTimeLoaded(true);
   }, []);
 
-  const nextCard = async () => {
-    currentPosition = computeNextPosition(repetitionCards, currentPosition);
-    const response = await fetch(`/api/getCard?id=${Array.from(repetitionCards)[currentPosition]}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-    });
-    const data = await response.json();
-
-    setCurrentCard(data.card);
-    setProgress({ totalSeenCards: (currentPosition + 1), totalCards: (repetitionCards.size) });
-  };
-
-  const unMarkForRepetition = async () => {  // Make the function async
-    if (currentCard?.id) {
-      const updatedRepetitionCards = new Set(repetitionCards);
-      console.log("updatedRepetitionCards: ", updatedRepetitionCards);
-
-      updatedRepetitionCards.delete(currentCard.id);
-      console.log("updatedRepetitionCards after: ", updatedRepetitionCards);
-
-      setRepetitionCards(updatedRepetitionCards);
-      localStorage.setItem('repetitionCards', JSON.stringify([...updatedRepetitionCards]));
-
-      if (updatedRepetitionCards.size === 1) {
-        currentPosition = 0;
-        revisionCurrentCard = Array.from(updatedRepetitionCards)[currentPosition];
-      } else if (updatedRepetitionCards.size === 0) {
-        revisionCurrentCard = -1;
-      } else {
-        currentPosition = updatedRepetitionCards.size > currentPosition ? currentPosition : currentPosition - 1;
-        revisionCurrentCard = Array.from(updatedRepetitionCards)[currentPosition]
+  useEffect(() => {
+      if (isFirstTimeLoaded && revisionCurrentCard !== -1) {
+        const cardId = Array.from(repetitionCards)[currentPosition];
+        console.log('useEffect() - fetchCard');
+        fetchCard(cardId);
       }
-      localStorage.setItem('revisionCurrentCard', JSON.stringify(revisionCurrentCard));
+  }, [isFirstTimeLoaded]);
 
-      // Recalculate the progress after removing the card
-      const newTotalCards = updatedRepetitionCards.size;
-      const newTotalSeenCards = currentPosition;
+    useEffect(() => {
+        if (revisionCurrentCard == -1) {
+          setCurrentCard(null);
+        }
+    }, [revisionCurrentCard]);
 
-      // Await the fetch request
-      const response = await fetch(`/api/getCard?id=${Array.from(updatedRepetitionCards)[currentPosition]}`, {
+    // Function to fetch the card by id
+    const fetchCard = async (cardId: number) => {
+      const response = await fetch(`/api/getCard?id=${cardId}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });
-
-      // Await the .json() to resolve the response
       const data = await response.json();
+      setCurrentCard(data.card);
+      setProgress({ totalSeenCards: currentPosition + 1, totalCards: repetitionCards.size });
+      setRevisionCurrentCard(data.card.id);
 
-      setCurrentCard(data.card);  // Now set the card
+      localStorage.setItem('revisionCurrentCard', JSON.stringify(data.card.id));
+      console.log('fetchCard - current revisionCurrentCard: ', data.card.id);
+    };
 
-      setProgress({
-        totalSeenCards: newTotalSeenCards,
-        totalCards: newTotalCards,
-      });
+    // Function to compute next position
+    function computeNextPosition(cardsSet: Set<number>, position: number): number {
+      if (revisionCurrentCard === -1 || position === repetitionCards.size - 1) {
+        return 0;
+      }
+      return position + 1;
     }
+
+    const nextCard = async () => {
+      console.log('next() - fetchCard');
+      const newPosition = computeNextPosition(repetitionCards, currentPosition);
+      setCurrentPosition(newPosition);
+      fetchCard(Array.from(repetitionCards)[newPosition]);
+    };
+
+  const unMarkForRepetition = async () => {
+        console.log('revisionCurrentCard:', revisionCurrentCard);
+
+        // Step 1: Remove the current `revisionCurrentCard` from the `repetitionCards` set
+        const updatedRepetitionCards = new Set(repetitionCards);
+        updatedRepetitionCards.delete(revisionCurrentCard);
+
+
+        console.log('old currentPosition:', currentPosition);
+        // Step 2: Update the `currentPosition`
+        let newPosition = currentPosition;
+        if (updatedRepetitionCards.size === 0) {
+          newPosition = -1;
+        } else {
+          const newCardsArray = Array.from(updatedRepetitionCards);
+          // Ensure we're not pointing to an invalid position (in case we removed the current card)
+          if (newPosition >= newCardsArray.length) {
+            newPosition = 0;
+          }
+        }
+        console.log('new currentPosition:', newPosition);
+
+        let newRevisionCurrentCard = (newPosition == -1) ? -1 : Array.from(updatedRepetitionCards)[newPosition];
+
+        // Step 3: Update state with the new set and position
+        setRepetitionCards(updatedRepetitionCards);
+        setCurrentPosition(newPosition);
+        setRevisionCurrentCard(newRevisionCurrentCard);
+
+        // Step 4: Save the updated repetitionCards and revisionCurrentCard to localStorage
+        localStorage.setItem('repetitionCards', JSON.stringify(Array.from(updatedRepetitionCards)));
+        localStorage.setItem('revisionCurrentCard', JSON.stringify(newRevisionCurrentCard));
+
+        setIsFirstTimeLoaded(true);
   };
 
   return (
@@ -141,7 +128,7 @@ export default function CardApp() {
       {/* Seen Cards Counter */}
       <div className="absolute top-4 left-4 p-4 bg-opacity-70 bg-gray-800 rounded-xl sm:top-6 sm:left-6">
         <p className="text-sm sm:text-lg font-semibold text-center">
-          {progress.totalSeenCards} / {progress.totalCards}
+          {currentCard ? `${progress.totalSeenCards} / ${progress.totalCards}` : ('0 / 0')}
         </p>
       </div>
 
@@ -190,18 +177,20 @@ export default function CardApp() {
 
       {/* Buttons */}
       <div className="mt-8 sm:mt-10 space-y-4 sm:space-y-0 sm:space-x-4 flex flex-col sm:flex-row justify-center items-center">
-        <button
-          onClick={nextCard}
-          className="px-4 sm:px-6 py-2 sm:py-3 bg-blue-500 hover:bg-blue-700 rounded-lg text-base sm:text-lg shadow-md"
-        >
-          {'>'}
-        </button>
+
         <button
           onClick={unMarkForRepetition}
           disabled={!currentCard}
           className="px-4 sm:px-6 py-2 sm:py-3 bg-yellow-500 hover:bg-yellow-700 rounded-lg text-base sm:text-lg shadow-md disabled:opacity-50"
         >
           UnMark for revision
+        </button>
+        <button
+                  onClick={nextCard}
+                  disabled={!currentCard}
+                  className="px-4 sm:px-6 py-2 sm:py-3 bg-blue-500 hover:bg-blue-700 rounded-lg text-base sm:text-lg shadow-md"
+                >
+                  {'>'}
         </button>
       </div>
     </div>

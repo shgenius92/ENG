@@ -25,72 +25,79 @@ export default function CardApp() {
   const [currentBucketVar, setCurrentBucketVar] = useState(0);
 
   useEffect(() => {
-    // Fetch data from localStorage
-    const storedSeenCards = new Set<number>(JSON.parse(localStorage.getItem('seenCards') || '[]'));
-    const storedRepetitionCards = new Set<number>(JSON.parse(localStorage.getItem('repetitionCards') || '[]'));
-    const storedCurrentBucket = parseInt(localStorage.getItem('currentBucket') || '0', 10);
-    setSeenCards(storedSeenCards);
-    setRepetitionCards(storedRepetitionCards);
-    setCurrentBucketVar(storedCurrentBucket);
+      const storedCurrentBucket = parseInt(localStorage.getItem('currentBucket') || '0', 10);
+      const storedSeenCards = new Set<number>(JSON.parse(localStorage.getItem('seenCards') || '[]'));
+      const storedRepetitionCards = new Set<number>(JSON.parse(localStorage.getItem('repetitionCards') || '[]'));
 
-    // If there are seen cards, get the last one
-    if (storedSeenCards.size > 0) {
-      const lastSeenCardId = Array.from(storedSeenCards)[storedSeenCards.size - 1];
-      console.log(`Last seen card ID: ${lastSeenCardId}`);
+      setSeenCards(storedSeenCards);
+      setRepetitionCards(storedRepetitionCards);
+      setCurrentBucketVar(storedCurrentBucket);
+    }, []);
 
-      const fetchLastCard = async () => {
-        const response = await fetch(`/api/getCard?id=${lastSeenCardId}`, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-        });
-
-        const data = await response.json();
-
-        if (data.card) {
-          setCurrentCard(data.card);
-        }
-      };
-      fetchLastCard();
+  useEffect(() => {
+    if (currentBucketVar) {
+      const displayCard = async () => {
+        (seenCards.size > 0) ? await fetchLastCard() : await fetchRandomCard();
+      }
+      displayCard();
     }
+  }, [currentBucketVar]);
 
-    setProgress({
-          totalSeenCards: storedSeenCards.size,
-          totalCards: defaultLotSize,
-        });
-  }, []);
+  const fetchLastCard = async () => {
+    const lastSeenCardId = Array.from(seenCards)[seenCards.size - 1];
+    const response = await fetch(`/api/getCard?id=${lastSeenCardId}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const data = await response.json();
+    console.log('fetchLastCard: data: ', data);
 
-  const fetchCard = async () => {
+    if (data) {  // Only proceed if data is not null (e.g., all cards read scenario)
+          setCurrentCard(data.card);  // Set the current card in state
+          setProgress({ totalSeenCards: seenCards.size, totalCards: defaultLotSize });  // Update progress if available
+
+          const updatedSeenCards = new Set(seenCards);  // Avoid mutating seenCards directly
+          updatedSeenCards.add(data.card.id);  // Add the current card's ID to the seen cards set
+          setSeenCards(updatedSeenCards);  // Update seenCards state
+          localStorage.setItem('seenCards', JSON.stringify([...updatedSeenCards]));  // Save updated seen cards to localStorage
+    }
+  };
+
+  // fetchRandomCard remains the same
+  const fetchRandomCard = async () => {
     const response = await fetch('/api/getCard', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ seenCardIds: [...seenCards], currentBucket: currentBucketVar}),
+      body: JSON.stringify({ seenCardIds: [...seenCards], currentBucket: currentBucketVar }),
     });
     const data = await response.json();
 
-    console.log('API response:', data);
+    console.log('fetchRandomCard: data: ', data);
 
     if (data.message === 'All cards read!') {
       alert('You have read all the cards!');
-      return;
+      return null;  // Return null if no more cards are available
     }
 
-    setCurrentCard(data.card);
-    setProgress(data.progress);
-    console.log('Card set:', data.card);
+    if (data) {  // Only proceed if data is not null (e.g., all cards read scenario)
+          setCurrentCard(data.card);  // Set the current card in state
+          setProgress(data.progress);  // Update progress if available
 
-    const updatedSeenCards = new Set(seenCards);
-    updatedSeenCards.add(data.card.id);
-    setSeenCards(updatedSeenCards);
-    localStorage.setItem('seenCards', JSON.stringify([...updatedSeenCards]));
+          const updatedSeenCards = new Set(seenCards);  // Avoid mutating seenCards directly
+          updatedSeenCards.add(data.card.id);  // Add the current card's ID to the seen cards set
+          setSeenCards(updatedSeenCards);  // Update seenCards state
+          localStorage.setItem('seenCards', JSON.stringify([...updatedSeenCards]));  // Save updated seen cards to localStorage
+    }
   };
 
+
   const markForRepetition = () => {
-    if (currentCard?.id) {
-      const updatedRepetitionCards = new Set(repetitionCards);
-      updatedRepetitionCards.add(currentCard.id);
-      setRepetitionCards(updatedRepetitionCards);
-      localStorage.setItem('repetitionCards', JSON.stringify([...updatedRepetitionCards]));
-    }
+      if (currentCard?.id) {
+        const updatedRepetitionCards = new Set(repetitionCards);
+        updatedRepetitionCards.add(currentCard.id);
+        setRepetitionCards(updatedRepetitionCards);
+        localStorage.setItem('repetitionCards', JSON.stringify([...updatedRepetitionCards]));
+      }
   };
 
   const resetCards = () => {
@@ -101,7 +108,6 @@ export default function CardApp() {
       totalCards: 0,
     });
     localStorage.setItem('seenCards', JSON.stringify([]));
-    localStorage.setItem('repetitionCards', JSON.stringify([]));
   };
 
   return (
@@ -162,7 +168,7 @@ export default function CardApp() {
       {/* Buttons */}
       <div className="mt-8 sm:mt-10 space-y-4 sm:space-y-0 sm:space-x-4 flex flex-col sm:flex-row justify-center items-center">
         <button
-          onClick={fetchCard}
+          onClick={fetchRandomCard}
           className="px-4 sm:px-6 py-2 sm:py-3 bg-blue-500 hover:bg-blue-700 rounded-lg text-base sm:text-lg shadow-md"
         >
           Get New Card
