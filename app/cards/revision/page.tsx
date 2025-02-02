@@ -34,7 +34,9 @@ export default function CardApp() {
   useEffect(() => {
     const storedRepetitionCards = new Set<number>(JSON.parse(localStorage.getItem('repetitionCards') || '[]'));
     setRepetitionCards(storedRepetitionCards);
-    const storedRevisionCurrentCard = parseInt(localStorage.getItem('revisionCurrentCard') || -1, 10);
+    const storedRevisionCurrentCard: number = localStorage.getItem('revisionCurrentCard')
+      ? parseInt(localStorage.getItem('revisionCurrentCard')!, 10)
+      : -1;
     const newRevisionCurrentCard = (storedRevisionCurrentCard < 0 && storedRepetitionCards.size > 0) ? Array.from(storedRepetitionCards)[0] : storedRevisionCurrentCard;
 
     setRevisionCurrentCard(newRevisionCurrentCard);
