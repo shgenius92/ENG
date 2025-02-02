@@ -92,12 +92,12 @@ export default function CardApp() {
 
 
   const markForRepetition = () => {
-      if (currentCard?.id) {
+
         const updatedRepetitionCards = new Set(repetitionCards);
         updatedRepetitionCards.add(currentCard.id);
         setRepetitionCards(updatedRepetitionCards);
         localStorage.setItem('repetitionCards', JSON.stringify([...updatedRepetitionCards]));
-      }
+        alert('repetition content: ' + JSON.stringify([...updatedRepetitionCards]));
   };
 
   const resetCards = () => {
