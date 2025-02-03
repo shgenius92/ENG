@@ -22,10 +22,15 @@ export default function CardApp() {
   const [currentPosition, setCurrentPosition] = useState(-1);
 
   useEffect(() => {
+    const storedRepetitionCards = new Set<number>(JSON.parse(localStorage.getItem('repetitionCards') || '[]'));
+    setRepetitionCards(storedRepetitionCards);
+
     // Fetch the value from localStorage
     const storedRevisionCurrentCard = localStorage.getItem('revision.currentCard');
-    const parsedRevisionCurrentCard = storedRevisionCurrentCard ? parseInt(storedRevisionCurrentCard, 10) : -1;
+    const parsedRevisionCurrentCard = storedRevisionCurrentCard ? parseInt(storedRevisionCurrentCard, 10) : Array.from(storedRepetitionCards)[0];
+
     fetchCard(parsedRevisionCurrentCard);
+    // to handle the case where revision.currentCard is null
   }, []);
 
     // Function to fetch the card by id
