@@ -15,14 +15,6 @@ type Card = {
   vi: string;
 };
 
-function getRevisionCurrentCardPosition(cardsSet: Set<number>, revisionCurrentCard: number): number {
-  const cardsArray = Array.from(cardsSet);
-  const position = cardsArray.indexOf(revisionCurrentCard);
-
-  console.log('getRevisionCurrentCardPosition: ', position);
-  return position;
-}
-
 export default function CardApp() {
   const [currentCard, setCurrentCard] = useState<Card | null>(null);
   const [repetitionCards, setRepetitionCards] = useState(new Set<number>());
@@ -31,7 +23,7 @@ export default function CardApp() {
 
   useEffect(() => {
     // Fetch the value from localStorage
-    const storedRevisionCurrentCard = localStorage.getItem('revisionCurrentCard');
+    const storedRevisionCurrentCard = localStorage.getItem('revision.currentCard');
     const parsedRevisionCurrentCard = storedRevisionCurrentCard ? parseInt(storedRevisionCurrentCard, 10) : -1;
     fetchCard(parsedRevisionCurrentCard);
   }, []);
@@ -46,58 +38,16 @@ export default function CardApp() {
       setCurrentCard(data.card);
       setProgress({ totalSeenCards: currentPosition + 1, totalCards: repetitionCards.size });
 
-      localStorage.setItem('revisionCurrentCard', JSON.stringify(data.card.id));
+      // doesn't need to setItem for first fetch, where revision.currentCard is already set
+      localStorage.setItem('revision.currentCard', JSON.stringify(data.card.id));
       console.log('fetchCard - current revisionCurrentCard: ', data.card.id);
     };
 
-    // Function to compute next position
-    function computeNextPosition(cardsSet: Set<number>, position: number): number {
-      if (revisionCurrentCard === -1 || position === repetitionCards.size - 1) {
-        return 0;
-      }
-      return position + 1;
-    }
 
     const nextCard = async () => {
-      console.log('next() - fetchCard');
-      const newPosition = computeNextPosition(repetitionCards, currentPosition);
-      setCurrentPosition(newPosition);
-      fetchCard(Array.from(repetitionCards)[newPosition]);
     };
 
   const unMarkForRepetition = async () => {
-        console.log('revisionCurrentCard:', revisionCurrentCard);
-
-        // Step 1: Remove the current `revisionCurrentCard` from the `repetitionCards` set
-        const updatedRepetitionCards = new Set(repetitionCards);
-        updatedRepetitionCards.delete(revisionCurrentCard);
-
-
-        console.log('old currentPosition:', currentPosition);
-        // Step 2: Update the `currentPosition`
-        let newPosition = currentPosition;
-        if (updatedRepetitionCards.size === 0) {
-          newPosition = -1;
-        } else {
-          const newCardsArray = Array.from(updatedRepetitionCards);
-          // Ensure we're not pointing to an invalid position (in case we removed the current card)
-          if (newPosition >= newCardsArray.length) {
-            newPosition = 0;
-          }
-        }
-        console.log('new currentPosition:', newPosition);
-
-        let newRevisionCurrentCard = (newPosition == -1) ? -1 : Array.from(updatedRepetitionCards)[newPosition];
-
-        // Step 3: Update state with the new set and position
-        setRepetitionCards(updatedRepetitionCards);
-        setCurrentPosition(newPosition);
-        setRevisionCurrentCard(newRevisionCurrentCard);
-
-        // Step 4: Save the updated repetitionCards and revisionCurrentCard to localStorage
-        localStorage.setItem('repetitionCards', JSON.stringify(Array.from(updatedRepetitionCards)));
-        localStorage.setItem('revisionCurrentCard', JSON.stringify(newRevisionCurrentCard));
-
   };
 
   return (
