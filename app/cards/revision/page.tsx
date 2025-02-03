@@ -27,38 +27,14 @@ export default function CardApp() {
   const [currentCard, setCurrentCard] = useState<Card | null>(null);
   const [repetitionCards, setRepetitionCards] = useState(new Set<number>());
   const [progress, setProgress] = useState({ totalSeenCards: 0, totalCards: 0 });
-  const [revisionCurrentCard, setRevisionCurrentCard] = useState(-1);
   const [currentPosition, setCurrentPosition] = useState(-1);
-  const [isFirstTimeLoaded, setIsFirstTimeLoaded] = useState(false);
 
   useEffect(() => {
-    const storedRepetitionCards = new Set<number>(JSON.parse(localStorage.getItem('repetitionCards') || '[]'));
-    setRepetitionCards(storedRepetitionCards);
-    const storedRevisionCurrentCard: number = localStorage.getItem('revisionCurrentCard')
-      ? parseInt(localStorage.getItem('revisionCurrentCard')!, 10)
-      : -1;
-    const newRevisionCurrentCard = (storedRevisionCurrentCard < 0 && storedRepetitionCards.size > 0) ? Array.from(storedRepetitionCards)[0] : storedRevisionCurrentCard;
-
-    setRevisionCurrentCard(newRevisionCurrentCard);
-    setCurrentPosition(getRevisionCurrentCardPosition(storedRepetitionCards, newRevisionCurrentCard));
-
-    setIsFirstTimeLoaded(true);
+    // Fetch the value from localStorage
+    const storedRevisionCurrentCard = localStorage.getItem('revisionCurrentCard');
+    const parsedRevisionCurrentCard = storedRevisionCurrentCard ? parseInt(storedRevisionCurrentCard, 10) : -1;
+    fetchCard(parsedRevisionCurrentCard);
   }, []);
-
-  useEffect(() => {
-      if (isFirstTimeLoaded && revisionCurrentCard !== -1) {
-        const cardId = Array.from(repetitionCards)[currentPosition];
-        fetchCard(cardId);
-      }
-  }, [isFirstTimeLoaded]);
-
-  useEffect(() => {
-        if (revisionCurrentCard == -1) {
-          setCurrentCard(null);
-        } else if (revisionCurrentCard !== -1) {
-            fetchCard(revisionCurrentCard);
-        }
-  }, [revisionCurrentCard]);
 
     // Function to fetch the card by id
     const fetchCard = async (cardId: number) => {
@@ -69,7 +45,6 @@ export default function CardApp() {
       const data = await response.json();
       setCurrentCard(data.card);
       setProgress({ totalSeenCards: currentPosition + 1, totalCards: repetitionCards.size });
-      setRevisionCurrentCard(data.card.id);
 
       localStorage.setItem('revisionCurrentCard', JSON.stringify(data.card.id));
       console.log('fetchCard - current revisionCurrentCard: ', data.card.id);
