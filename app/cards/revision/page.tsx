@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 // Define the type for the card
 
@@ -15,6 +15,14 @@ type Card = {
   vi: string;
 };
 
+function getCardPosition(cardsSet: Set<number>, revisionCurrentCard: number): number {
+  const cardsArray = Array.from(cardsSet);
+  const position = cardsArray.indexOf(revisionCurrentCard);
+
+  console.log('getRevisionCurrentCardPosition: ', position);
+  return position;
+}
+
 export default function CardApp() {
   const [currentCard, setCurrentCard] = useState<Card | null>(null);
   const [repetitionCards, setRepetitionCards] = useState(new Set<number>());
@@ -29,30 +37,54 @@ export default function CardApp() {
     const storedRevisionCurrentCard = localStorage.getItem('revision.currentCard');
     const parsedRevisionCurrentCard = storedRevisionCurrentCard ? parseInt(storedRevisionCurrentCard, 10) : Array.from(storedRepetitionCards)[0];
 
+    // initialize currentPosition if not yet initialized
+    const newCurrentPosition = getCardPosition(storedRepetitionCards, parsedRevisionCurrentCard);
+    setCurrentPosition(newCurrentPosition);
+
+    setProgress({ totalSeenCards: newCurrentPosition + 1, totalCards: storedRepetitionCards.size });
+
     fetchCard(parsedRevisionCurrentCard);
-    // to handle the case where revision.currentCard is null
   }, []);
+
+  // Function to compute next position
+    function computeNextPosition(cardsSet: Set<number>, position: number): number {
+      if (position === cardsSet.size - 1) {
+        return 0;
+      }
+      return position + 1;
+    }
 
     // Function to fetch the card by id
     const fetchCard = async (cardId: number) => {
+
+      console.log('fetchCard - cardId: ', cardId);
+
       const response = await fetch(`/api/getCard?id=${cardId}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });
       const data = await response.json();
       setCurrentCard(data.card);
-      setProgress({ totalSeenCards: currentPosition + 1, totalCards: repetitionCards.size });
-
-      // doesn't need to setItem for first fetch, where revision.currentCard is already set
-      localStorage.setItem('revision.currentCard', JSON.stringify(data.card.id));
-      console.log('fetchCard - current revisionCurrentCard: ', data.card.id);
     };
 
-
     const nextCard = async () => {
+        // localStorage.setItem('revision.currentCard', JSON.stringify(data.card.id));
+        console.log('nextCard - repetitionCards: ', repetitionCards);
+        console.log('nextCard - currentPosition: ', currentPosition);
+        console.log('nextCard - computeNextPosition(repetitionCards, currentPosition): ', computeNextPosition(repetitionCards, currentPosition));
+
+        if (currentCard) {
+          const nextPosition = computeNextPosition(repetitionCards, currentPosition);
+          const nextCardId = Array.from(repetitionCards)[nextPosition];
+          fetchCard(nextCardId);
+
+          setCurrentPosition(nextPosition);
+          setProgress({ totalSeenCards: currentPosition + 1, totalCards: repetitionCards.size });
+        }
     };
 
   const unMarkForRepetition = async () => {
+    // localStorage.setItem('revision.currentCard', JSON.stringify(data.card.id));
   };
 
   return (
