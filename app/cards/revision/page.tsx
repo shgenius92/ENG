@@ -216,7 +216,7 @@ export default function CardApp() {
         </button>
         <button
                   onClick={nextCard}
-                  disabled={!currentCard || (repetitionCards && repetitionCards.size === 1) ? true : undefined}
+                  disabled={!currentCard}
                   className="px-4 sm:   px-6 py-2 sm:py-3 bg-blue-500 hover:bg-blue-700 rounded-lg text-base sm:text-lg shadow-md"
                 >
                   {'>'}
