@@ -19,31 +19,56 @@ function getCardPosition(cardsSet: Set<number>, revisionCurrentCard: number): nu
   const cardsArray = Array.from(cardsSet);
   const position = cardsArray.indexOf(revisionCurrentCard);
 
-  console.log('getRevisionCurrentCardPosition: ', position);
   return position;
 }
 
 export default function CardApp() {
   const [currentCard, setCurrentCard] = useState<Card | null>(null);
-  const [repetitionCards, setRepetitionCards] = useState(new Set<number>());
+  const [repetitionCards, setRepetitionCards] = useState<Set<number> | null>(null);
   const [progress, setProgress] = useState({ totalSeenCards: 0, totalCards: 0 });
-  const [currentPosition, setCurrentPosition] = useState(-1);
+  const [currentPosition, setCurrentPosition] = useState<number | null>(null);
 
   useEffect(() => {
-    const storedRepetitionCards = new Set<number>(JSON.parse(localStorage.getItem('repetitionCards') || '[]'));
-    setRepetitionCards(storedRepetitionCards);
+    const storedRepetitionCards = localStorage.getItem('repetitionCards');
+    const parsedRepetitionCards: Set<number> | null = (storedRepetitionCards === null || storedRepetitionCards === "[]") ? null : new Set(JSON.parse(storedRepetitionCards));
 
     // Fetch the value from localStorage
+    // TODO rename RevisionCurrentCard to CurrentCardId
     const storedRevisionCurrentCard = localStorage.getItem('revision.currentCard');
-    const parsedRevisionCurrentCard = storedRevisionCurrentCard ? parseInt(storedRevisionCurrentCard, 10) : Array.from(storedRepetitionCards)[0];
 
-    // initialize currentPosition if not yet initialized
-    const newCurrentPosition = getCardPosition(storedRepetitionCards, parsedRevisionCurrentCard);
+    let parsedRevisionCurrentCard = null;
+    let newCurrentPosition = null;
+    // case when storedRevisionCurrentCard == null and parsedRepetitionCards == null => null (default) value
+      // no currentPosition == null (default) value
+    // case when storedRevisionCurrentCard == null and parsedRepetitionCards !== null => possible at the beginning
+      // currentPosition == 0
+    // case when storedRevisionCurrentCard !== null and parsedRepetitionCards == null => not possible
+    // case when storedRevisionCurrentCard !== null and parsedRepetitionCards !== null => possible
+      // currentPosition == getCardPosition(parsedRepetitionCards, parsedRevisionCurrentCard);
+
+    if (storedRevisionCurrentCard && storedRevisionCurrentCard !== "null" && parsedRepetitionCards) {
+        console.log('case when storedRevisionCurrentCard !== null and parsedRepetitionCards !== null');
+        parsedRevisionCurrentCard = parseInt(storedRevisionCurrentCard, 10);
+        newCurrentPosition = getCardPosition(parsedRepetitionCards, parsedRevisionCurrentCard);
+    } else {
+        if (parsedRepetitionCards) {
+            console.log('case when storedRevisionCurrentCard == null and parsedRepetitionCards !== null');
+            newCurrentPosition = 0;
+            parsedRevisionCurrentCard = Array.from(parsedRepetitionCards)[newCurrentPosition];
+        } else {
+            console.log('case when storedRevisionCurrentCard == null and parsedRepetitionCards == null');
+        }
+    }
+
+    console.log('parsedRevisionCurrentCard: ', parsedRevisionCurrentCard);
+    console.log('newCurrentPosition: ', newCurrentPosition);
+
+    if (newCurrentPosition != null && parsedRevisionCurrentCard != null)
+        fetchCard(parsedRevisionCurrentCard);
+
+    setRepetitionCards(parsedRepetitionCards);
     setCurrentPosition(newCurrentPosition);
-
-    setProgress({ totalSeenCards: newCurrentPosition + 1, totalCards: storedRepetitionCards.size });
-
-    fetchCard(parsedRevisionCurrentCard);
+    setProgress({ totalSeenCards: (newCurrentPosition != null) ? newCurrentPosition + 1 : 0, totalCards: (parsedRepetitionCards) ? parsedRepetitionCards.size : 0 });
   }, []);
 
   // Function to compute next position
@@ -68,23 +93,63 @@ export default function CardApp() {
     };
 
     const nextCard = async () => {
-        // localStorage.setItem('revision.currentCard', JSON.stringify(data.card.id));
-        console.log('nextCard - repetitionCards: ', repetitionCards);
-        console.log('nextCard - currentPosition: ', currentPosition);
-        console.log('nextCard - computeNextPosition(repetitionCards, currentPosition): ', computeNextPosition(repetitionCards, currentPosition));
+        if (repetitionCards && currentPosition) {
+            console.log('nextCard - repetitionCards: ', repetitionCards);
+            console.log('nextCard - currentPosition: ', currentPosition);
+            console.log('nextCard - computeNextPosition(repetitionCards, currentPosition): ', computeNextPosition(repetitionCards, currentPosition));
 
-        if (currentCard) {
-          const nextPosition = computeNextPosition(repetitionCards, currentPosition);
-          const nextCardId = Array.from(repetitionCards)[nextPosition];
-          fetchCard(nextCardId);
+            // TODO: condition useless
+            if (currentCard) {
+              const nextPosition = computeNextPosition(repetitionCards, currentPosition);
+              const nextCardId = Array.from(repetitionCards)[nextPosition];
+              fetchCard(nextCardId);
 
-          setCurrentPosition(nextPosition);
-          setProgress({ totalSeenCards: nextPosition + 1, totalCards: repetitionCards.size });
+              setCurrentPosition(nextPosition);
+              setProgress({ totalSeenCards: nextPosition + 1, totalCards: repetitionCards.size });
+
+              localStorage.setItem('revision.currentCard', JSON.stringify(nextCardId));
+            }
         }
     };
 
   const unMarkForRepetition = async () => {
-    // localStorage.setItem('revision.currentCard', JSON.stringify(data.card.id));
+    // delete the currentCard from repetitionCards
+    if (currentCard) {
+        const updatedRepetitionCards = new Set(repetitionCards);
+        updatedRepetitionCards.delete(currentCard.id);
+        console.log('unMarkForRepetition - repetitionCards - before: ', repetitionCards);
+        console.log('unMarkForRepetition - repetitionCards - after: ', updatedRepetitionCards);
+
+        // compute the nextPosition
+        let nextPosition = currentPosition;
+        if (updatedRepetitionCards.size === 0) {
+          nextPosition = null;
+        } else {
+          if (nextPosition !== null && nextPosition >= updatedRepetitionCards.size) {
+            nextPosition = 0;
+          }
+        }
+
+        console.log('unMarkForRepetition - currentPosition: ', currentPosition);
+        console.log('unMarkForRepetition - nextPosition: ', nextPosition);
+
+        // fetch card
+        let nextCardId = null;
+        if (nextPosition != null) {
+          nextCardId = Array.from(updatedRepetitionCards)[nextPosition];
+          fetchCard(nextCardId);
+        } else {
+          setCurrentCard(null);
+        }
+
+        // Update states
+        setRepetitionCards(updatedRepetitionCards);
+        setProgress({ totalSeenCards: (nextPosition != null) ? nextPosition + 1 : 0, totalCards: (updatedRepetitionCards) ? updatedRepetitionCards.size : 0 });
+
+        // Store in localStorage: repetitionCards / revision.currentCard
+        localStorage.setItem('repetitionCards', JSON.stringify(Array.from(updatedRepetitionCards)));
+        localStorage.setItem('revision.currentCard', JSON.stringify(nextCardId));
+    }
   };
 
   return (
@@ -134,7 +199,7 @@ export default function CardApp() {
           </div>
         ) : (
           <div className="w-full h-full flex justify-center items-center text-gray-500 text-center">
-            <p>No card selected. Click 'Get New Card' to start.</p>
+            <p>No card marked for revision yet.</p>
           </div>
         )}
       </div>
@@ -151,8 +216,8 @@ export default function CardApp() {
         </button>
         <button
                   onClick={nextCard}
-                  disabled={!currentCard}
-                  className="px-4 sm:px-6 py-2 sm:py-3 bg-blue-500 hover:bg-blue-700 rounded-lg text-base sm:text-lg shadow-md"
+                  disabled={!currentCard || (repetitionCards && repetitionCards.size == 1) ? true : undefined}
+                  className="px-4 sm:   px-6 py-2 sm:py-3 bg-blue-500 hover:bg-blue-700 rounded-lg text-base sm:text-lg shadow-md"
                 >
                   {'>'}
         </button>
