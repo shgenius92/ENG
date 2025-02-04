@@ -79,7 +79,7 @@ export default function CardApp() {
           fetchCard(nextCardId);
 
           setCurrentPosition(nextPosition);
-          setProgress({ totalSeenCards: currentPosition + 1, totalCards: repetitionCards.size });
+          setProgress({ totalSeenCards: nextPosition + 1, totalCards: repetitionCards.size });
         }
     };
 
