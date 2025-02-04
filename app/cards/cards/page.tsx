@@ -97,7 +97,6 @@ export default function CardApp() {
         updatedRepetitionCards.add(currentCard.id);
         setRepetitionCards(updatedRepetitionCards);
         localStorage.setItem('repetitionCards', JSON.stringify([...updatedRepetitionCards]));
-        alert('repetition content: ' + JSON.stringify([...updatedRepetitionCards]));
       }
   };
 
