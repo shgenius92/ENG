@@ -93,7 +93,7 @@ export default function CardApp() {
     };
 
     const nextCard = async () => {
-        if (repetitionCards && currentPosition) {
+        if (repetitionCards !== null && currentPosition !== null) {
             console.log('nextCard - repetitionCards: ', repetitionCards);
             console.log('nextCard - currentPosition: ', currentPosition);
             console.log('nextCard - computeNextPosition(repetitionCards, currentPosition): ', computeNextPosition(repetitionCards, currentPosition));
@@ -216,7 +216,7 @@ export default function CardApp() {
         </button>
         <button
                   onClick={nextCard}
-                  disabled={!currentCard}
+                  disabled={!currentCard || repetitionCards?.size == 1}
                   className="px-4 sm:   px-6 py-2 sm:py-3 bg-blue-500 hover:bg-blue-700 rounded-lg text-base sm:text-lg shadow-md"
                 >
                   {'>'}
